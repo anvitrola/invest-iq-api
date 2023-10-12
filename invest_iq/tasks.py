@@ -10,13 +10,14 @@ from stock_monitoring.models import Stock
 
 logger = logging.getLogger(__name__)
 
+
 @shared_task
 def monitor_stocks():
     logger.info("Task started.")
 
-    token = "aF8prcDAZggt6XneFQBAQy"
-
     stocks = Stock.objects.values_list("ticker", flat=True).distinct()
+    token = os.getenv("BRAPI_API_TOKEN")
+
     ticker_urls = [
         f"https://brapi.dev/api/quote/{ticker}?token={token}" for ticker in stocks
     ]
@@ -43,37 +44,53 @@ def monitor_stocks():
                     current_time - stock.updated_at
                 ).total_seconds() / 60
 
-                if time_difference_minutes >= periodicity:
-                    old_change = stock.change
+                # We check if stock was just updated - respecting the periodicity our client choose
+                # And we check if the stock price has changed. If it's the same we don't do anything
+                if (
+                    time_difference_minutes > periodicity
+                    and stock.close != current_close
+                ):
+                    # Saving the stock close and change values before updating them
                     old_close = stock.close
+                    old_change = stock.change
 
-                    stock.change = current_change
+                    # We update the stock price since it has changed
                     stock.close = current_close
+                    stock.change = current_change
 
                     change_history = json.loads(stock.change_history)
 
-                    change_history.append({"change": old_change, "date": stock.updated_at.strftime("%Y-%m-%d %H:%M:%S")})
+                    change_history.append(
+                        {
+                            "change": old_change,
+                            "date": stock.updated_at,
+                            "close": old_close,
+                        }
+                    )
+
                     stock.change_history = json.dumps(change_history)
                     stock.updated_at = current_time
 
                     stock.save()
 
+                    # If stock price went down and if the current price is <= than the lower bound
                     if current_change < 0 and current_close <= stock.lower_bound:
                         print(f"\tIt's time to buy {result['symbol']}! Hurry up!")
                         send_mail(
                             f"It's time to buy {result['symbol']}.",
-                            f"\tThis stock price has changed! It was R${old_close} but now it is R${current_close}, change of {current_change}. It has reached your lower bound value of R${stock.lower_bound}, indicating it is a good time to buy this stock\n\Good luck!",
+                            f"\tThis stock price has changed! It was R${old_close} but now it is R${current_close}, change of {current_change}. It has reached your lower bound value of R${stock.lower_bound}, indicating it is a good time to buy this stock. Good luck!",
                             None,
                             [stock.account.email],
                             fail_silently=False,
                         )
 
+                    # If stock price went up and if the current price is >= than the upper bound
                     if current_change > 0 and current_close >= stock.upper_bound:
-                        print(f"\tIt's time to sell {result['symbol']}\n\Hurry up!")
+                        print(f"\tIt's time to sell {result['symbol']}! Hurry up!")
 
                         send_mail(
                             f"It's time to sell {result['symbol']}.",
-                            f"\tThis stock price has changed! It was R${old_close} but its last change price is R${current_close}, change of {current_change}. It has reached your upper bound value of R${stock.upper_bound}, indicating it is a good time to sell this stock\n\Good luck!",
+                            f"\tThis stock price has changed! It was R${old_close} but its last change price is R${current_close}, change of {current_change}. It has reached your upper bound value of R${stock.upper_bound}, indicating it is a good time to sell this stock. Good luck!",
                             None,
                             [stock.account.email],
                             fail_silently=False,
