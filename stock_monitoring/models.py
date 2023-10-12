@@ -7,7 +7,8 @@ from account_management.models import Account
 class Stock(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at  = models.DateTimeField(auto_now_add=True)
+    updated_at  = models.DateTimeField(auto_now=True)
+
     account = models.ForeignKey(Account, on_delete=models.CASCADE)
     
     ticker = models.CharField(max_length=50)
