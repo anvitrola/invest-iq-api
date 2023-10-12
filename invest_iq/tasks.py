@@ -63,7 +63,7 @@ def monitor_stocks():
                     change_history.append(
                         {
                             "change": old_change,
-                            "date": stock.updated_at,
+                            "date": stock.updated_at.strftime("%Y-%m-%d %H:%M:%S"),
                             "close": old_close,
                         }
                     )
