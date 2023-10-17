@@ -66,10 +66,13 @@
 
 ### Run the monitoring task
 
-1. Activate celery worker
+1. Activate Redis-server:
+`redis-server`
+
+2. Activate celery worker
 `celery -A invest_iq worker --loglevel=info`
 
-2. Activate celery beat (scheduler):
+3. Activate celery beat (scheduler):
 `celery -A invest_iq beat --loglevel=info`
 
 
