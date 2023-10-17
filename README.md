@@ -42,25 +42,39 @@
 
 ### 🚀 Running the Project
 
-1. Install the required dependencies:
+1. Clone this repo
+`git clone https://github.com/anvitrola/invest-iq-api.git`
 
-```
-pip install -r requirements.txt
-```
+2. Create a virtual environment:
+`python -m venv venv`
 
-2. Set up the database:
+3. Activate virtual environment:
+`source venv/bin/activate`
 
-```
-python manage.py migrate
-```
+4. Install the required dependencies:
+`pip install -r requirements.txt`
+
+5. Set up the database:
+`python manage.py migrate`
+
+6. Create a superuser which will alow you to login into Django Admin on localhost:800:
+`python manage.py createsuperuser`
 
 3. Start the development server:
+`python manage.py runserver`
 
-```
-python manage.py runserver
-```
 
-<p>You can find the API here -> <a href="https://github.com/anvitrola/invest-iq-api">here</a>. 🌸</p>
+### Run the monitoring task
+
+1. Activate celery worker
+`celery -A invest_iq worker --loglevel=info`
+
+2. Activate celery beat (scheduler):
+`celery -A invest_iq beat --loglevel=info`
+
+
+
+<p>You can find the APP here -> <a href="https://github.com/anvitrola/invest-iq-app">here</a>. 🌸</p>
 
 
 <div align="center">
