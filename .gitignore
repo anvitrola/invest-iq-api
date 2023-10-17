@@ -9,4 +9,3 @@ celerybeat-schedule
 .env
 redis.conf
 venv
-invest_iq/settings.py
